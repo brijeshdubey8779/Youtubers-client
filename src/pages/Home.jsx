@@ -138,7 +138,7 @@ const Home = () => {
                         {homeData.sliders.map((slider) => (
                             <div key={slider.id} className="min-w-full h-full relative flex-shrink-0">
                                 <img
-                                    src={slider.photo_url}
+                                    src={slider.photo}
                                     alt={slider.headline}
                                     className="w-full h-full object-cover"
                                 />
@@ -224,7 +224,7 @@ const Home = () => {
                                 <div key={youtuber.id} className="youtuber-card">
                                     <div className="relative">
                                         <img
-                                            src={youtuber.photo_url}
+                                            src={youtuber.photo}
                                             alt={youtuber.name}
                                             className="youtuber-card-image"
                                         />
@@ -342,7 +342,7 @@ const Home = () => {
                                     <div key={member.id} className="team-card-dark flex-shrink-0 w-80">
                                         <div className="relative">
                                             <img
-                                                src={member.photo_url || '/api/placeholder/300/300'}
+                                                src={member.photo || 'https://via.placeholder.com/300x300?text=No+Image'}
                                                 alt={`${member.first_name} ${member.last_name}`}
                                                 className="w-full h-64 object-cover"
                                             />

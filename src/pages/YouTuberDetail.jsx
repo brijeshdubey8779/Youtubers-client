@@ -96,7 +96,7 @@ const YouTuberDetail = () => {
                         <div className="text-center lg:text-left">
                             <div className="relative inline-block">
                                 <img
-                                    src={youtuber.photo_url || '/api/placeholder/400/400'}
+                                    src={youtuber.photo || 'https://via.placeholder.com/400x400?text=No+Image'}
                                     alt={youtuber.name}
                                     className="w-80 h-80 object-cover rounded-lg shadow-2xl mx-auto lg:mx-0"
                                 />
@@ -266,7 +266,7 @@ const YouTuberDetail = () => {
                                 <div key={relatedYoutuber.id} className="youtuber-card">
                                     <div className="relative">
                                         <img
-                                            src={relatedYoutuber.photo_url || '/api/placeholder/300/300'}
+                                            src={relatedYoutuber.photo || 'https://via.placeholder.com/300x300?text=No+Image'}
                                             alt={relatedYoutuber.name}
                                             className="youtuber-card-image"
                                         />

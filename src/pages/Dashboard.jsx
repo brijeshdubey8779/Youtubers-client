@@ -151,7 +151,7 @@ const Dashboard = () => {
                                     {dashboardData.featured_youtubers.map((youtuber) => (
                                         <div key={youtuber.id} className="flex items-center space-x-4 p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
                                             <img
-                                                src={youtuber.photo_url || '/api/placeholder/60/60'}
+                                                src={youtuber.photo || 'https://via.placeholder.com/60x60?text=No+Image'}
                                                 alt={youtuber.name}
                                                 className="w-12 h-12 rounded-full object-cover"
                                             />
@@ -197,7 +197,7 @@ const Dashboard = () => {
                                     {dashboardData.recent_youtubers.map((youtuber) => (
                                         <div key={youtuber.id} className="flex items-center space-x-4 p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
                                             <img
-                                                src={youtuber.photo_url || '/api/placeholder/60/60'}
+                                                src={youtuber.photo || 'https://via.placeholder.com/60x60?text=No+Image'}
                                                 alt={youtuber.name}
                                                 className="w-12 h-12 rounded-full object-cover"
                                             />

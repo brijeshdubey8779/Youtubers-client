@@ -306,7 +306,7 @@ const YouTubers = () => {
                             <div key={youtuber.id} className="youtuber-card group">
                                 <div className="relative">
                                     <img
-                                        src={youtuber.photo_url || '/api/placeholder/300/300'}
+                                        src={youtuber.photo || 'https://via.placeholder.com/300x300?text=No+Image'}
                                         alt={youtuber.name}
                                         className="youtuber-card-image group-hover:scale-105 transition-transform duration-300"
                                     />
