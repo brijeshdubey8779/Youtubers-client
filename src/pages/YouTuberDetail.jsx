@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { youtubersAPI } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import CollaborationInquiryForm from '../components/CollaborationInquiryForm';
+import SuccessNotification from '../components/SuccessNotification';
 
 const YouTuberDetail = () => {
     const { id } = useParams();
@@ -11,6 +13,7 @@ const YouTuberDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showContactForm, setShowContactForm] = useState(false);
+    const [showSuccessNotification, setShowSuccessNotification] = useState(false);
 
     // Apply dark theme to body
     useEffect(() => {
@@ -63,6 +66,12 @@ const YouTuberDetail = () => {
 
     const handleCloseContact = () => {
         setShowContactForm(false);
+    };
+
+    const handleInquirySuccess = (response) => {
+        setShowContactForm(false);
+        // You could add a success message or redirect here
+        alert('Your collaboration inquiry has been sent successfully! The creator will respond within 48 hours.');
     };
 
     if (loading) return <LoadingSpinner text="Loading YouTuber profile..." />;
@@ -317,61 +326,13 @@ const YouTuberDetail = () => {
                 </section>
             )}
 
-            {/* Contact Modal */}
+            {/* Collaboration Inquiry Form */}
             {showContactForm && (
-                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-                    <div className="bg-gray-800 rounded-lg p-8 max-w-md w-full border border-gray-700">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-white">Contact {youtuber.name}</h3>
-                            <button
-                                onClick={handleCloseContact}
-                                className="text-gray-400 hover:text-white"
-                            >
-                                ✕
-                            </button>
-                        </div>
-
-                        <form className="space-y-4">
-                            <div>
-                                <label className="form-label-dark">Your Name</label>
-                                <input type="text" className="form-input-dark" placeholder="Enter your name" />
-                            </div>
-                            <div>
-                                <label className="form-label-dark">Email</label>
-                                <input type="email" className="form-input-dark" placeholder="Enter your email" />
-                            </div>
-                            <div>
-                                <label className="form-label-dark">Project Details</label>
-                                <textarea
-                                    className="form-input-dark h-24"
-                                    placeholder="Tell us about your collaboration idea..."
-                                ></textarea>
-                            </div>
-                            <div>
-                                <label className="form-label-dark">Budget Range</label>
-                                <select className="form-input-dark">
-                                    <option value="">Select budget range</option>
-                                    <option value="5000-10000">₹5,000 - ₹10,000</option>
-                                    <option value="10000-25000">₹10,000 - ₹25,000</option>
-                                    <option value="25000-50000">₹25,000 - ₹50,000</option>
-                                    <option value="50000+">₹50,000+</option>
-                                </select>
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button type="submit" className="btn btn-primary flex-1">
-                                    Send Message
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleCloseContact}
-                                    className="btn btn-secondary flex-1"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <CollaborationInquiryForm
+                    youtuber={youtuber}
+                    onClose={handleCloseContact}
+                    onSuccess={handleInquirySuccess}
+                />
             )}
         </div>
     );

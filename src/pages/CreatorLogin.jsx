@@ -1,23 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
-const Login = () => {
+const API_BASE_URL = 'http://localhost:8000/api';
+
+const CreatorLogin = () => {
     const [formData, setFormData] = useState({
         username: '',
         password: ''
     });
     const [showPassword, setShowPassword] = useState(false);
-    const [formErrors, setFormErrors] = useState({});
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-
-    const { login, isAuthenticated } = useAuth();
+    const [error, setError] = useState('');
     const navigate = useNavigate();
-    const location = useLocation();
-
-    // Redirect destination after login
-    const from = location.state?.from?.pathname || '/dashboard';
+    const { login } = useAuth();
 
     // Apply dark theme
     useEffect(() => {
@@ -25,70 +22,74 @@ const Login = () => {
         return () => document.body.classList.remove('dark');
     }, []);
 
-    // Redirect if already authenticated
-    useEffect(() => {
-        if (isAuthenticated) {
-            navigate(from, { replace: true });
-        }
-    }, [isAuthenticated, navigate, from]);
-
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-
-        // Clear field-specific error when user starts typing
-        if (formErrors[name]) {
-            setFormErrors(prev => ({
-                ...prev,
-                [name]: ''
-            }));
-        }
-    };
-
-    const validateForm = () => {
-        const errors = {};
-
-        if (!formData.username.trim()) {
-            errors.username = 'Username is required';
-        }
-
-        if (!formData.password) {
-            errors.password = 'Password is required';
-        } else if (formData.password.length < 6) {
-            errors.password = 'Password must be at least 6 characters';
-        }
-
-        setFormErrors(errors);
-        return Object.keys(errors).length === 0;
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         setError('');
 
-        if (!validateForm()) {
-            return;
-        }
+        console.log('🎬 CREATOR LOGIN DEBUG - Starting login process');
+        console.log('- Form Data:', formData);
+        console.log('- API URL:', `${API_BASE_URL}/creator/login/`);
 
-        setLoading(true);
         try {
-            const result = await login(formData);
-            if (result.success) {
-                // Check user type and redirect appropriately
-                const userType = localStorage.getItem('user_type');
-                if (userType === 'creator') {
-                    navigate('/creator/dashboard');
+            const response = await axios.post(`${API_BASE_URL}/creator/login/`, formData);
+
+            console.log('✅ Creator Login API Response:', response.data);
+            console.log('- Token:', response.data.token ? response.data.token.substring(0, 10) + '...' : 'None');
+            console.log('- User:', response.data.user);
+            console.log('- Creator Profile:', response.data.creator_profile);
+
+            // Store authentication data
+            localStorage.setItem('creator_token', response.data.token);
+            localStorage.setItem('access_token', response.data.token); // For unified API calls
+            localStorage.setItem('user_type', 'creator'); // CRITICAL: Mark as creator
+            localStorage.setItem('creator_user', JSON.stringify(response.data.user));
+            localStorage.setItem('creator_profile', JSON.stringify(response.data.creator_profile));
+
+            console.log('💾 Local Storage Updated:');
+            console.log('- creator_token:', localStorage.getItem('creator_token') ? 'Set' : 'Not Set');
+            console.log('- access_token:', localStorage.getItem('access_token') ? 'Set' : 'Not Set');
+            console.log('- user_type:', localStorage.getItem('user_type'));
+
+            // Update AuthContext with creator user data
+            if (login) {
+                console.log('🔄 Updating AuthContext with creator data...');
+                await login({
+                    user: response.data.user,
+                    token: response.data.token,
+                    userType: 'creator'
+                });
+            }
+
+            console.log('🎯 Redirecting to creator dashboard...');
+            // Redirect to creator dashboard
+            navigate('/creator/dashboard');
+
+        } catch (error) {
+            console.error('❌ Creator Login Error:', error);
+            console.error('- Error Response:', error.response?.data);
+            console.error('- Error Status:', error.response?.status);
+
+            if (error.response && error.response.data) {
+                if (error.response.data.non_field_errors) {
+                    setError(error.response.data.non_field_errors[0]);
+                } else if (error.response.data.username) {
+                    setError(error.response.data.username[0]);
+                } else if (error.response.data.password) {
+                    setError(error.response.data.password[0]);
                 } else {
-                    navigate(from, { replace: true });
+                    setError('Login failed. Please check your credentials.');
                 }
             } else {
-                setError(result.error || 'Login failed');
+                setError('Network error. Please try again.');
             }
-        } catch (err) {
-            setError('An unexpected error occurred');
         } finally {
             setLoading(false);
         }
@@ -99,10 +100,10 @@ const Login = () => {
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="text-center">
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-                        Sign in to your account
+                        Creator Dashboard Login
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-400">
-                        Access your dashboard and manage your profile
+                        Access your creator dashboard to manage collaboration requests
                     </p>
                 </div>
             </div>
@@ -110,7 +111,6 @@ const Login = () => {
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="card-dark py-8 px-4 shadow sm:rounded-lg sm:px-10">
                     <form className="space-y-6" onSubmit={handleSubmit}>
-                        {/* Global Error */}
                         {error && (
                             <div className="bg-red-600 border border-red-700 text-white px-4 py-3 rounded relative">
                                 <span className="block sm:inline">{error}</span>
@@ -126,7 +126,6 @@ const Login = () => {
                                     id="username"
                                     name="username"
                                     type="text"
-                                    autoComplete="username"
                                     required
                                     value={formData.username}
                                     onChange={handleChange}
@@ -134,9 +133,6 @@ const Login = () => {
                                     placeholder="Enter your username"
                                 />
                             </div>
-                            {formErrors.username && (
-                                <p className="mt-1 text-sm text-red-400">{formErrors.username}</p>
-                            )}
                         </div>
 
                         <div>
@@ -148,7 +144,6 @@ const Login = () => {
                                     id="password"
                                     name="password"
                                     type={showPassword ? 'text' : 'password'}
-                                    autoComplete="current-password"
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
@@ -172,33 +167,6 @@ const Login = () => {
                                     )}
                                 </button>
                             </div>
-                            {formErrors.password && (
-                                <p className="mt-1 text-sm text-red-400">{formErrors.password}</p>
-                            )}
-                        </div>
-
-                        {/* Remember Me & Forgot Password */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <input
-                                    id="remember-me"
-                                    name="remember-me"
-                                    type="checkbox"
-                                    className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-600 bg-gray-700 rounded"
-                                />
-                                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-400">
-                                    Remember me
-                                </label>
-                            </div>
-
-                            <div className="text-sm">
-                                <Link
-                                    to="/forgot-password"
-                                    className="text-orange-400 hover:text-orange-300 transition-colors"
-                                >
-                                    Forgot your password?
-                                </Link>
-                            </div>
                         </div>
 
                         <div>
@@ -216,7 +184,7 @@ const Login = () => {
                                         Signing in...
                                     </div>
                                 ) : (
-                                    'Sign In'
+                                    'Sign In to Dashboard'
                                 )}
                             </button>
                         </div>
@@ -228,16 +196,16 @@ const Login = () => {
                                 <div className="w-full border-t border-gray-700" />
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-gray-800 text-gray-400">Don't have an account?</span>
+                                <span className="px-2 bg-gray-800 text-gray-400">New to creator dashboard?</span>
                             </div>
                         </div>
 
                         <div className="mt-6">
                             <Link
-                                to="/register"
+                                to="/creator/register"
                                 className="w-full flex justify-center py-2 px-4 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-sm font-medium text-gray-200 hover:bg-gray-600 transition-colors duration-200"
                             >
-                                Create New Account
+                                Create Creator Account
                             </Link>
                         </div>
                     </div>
@@ -249,21 +217,15 @@ const Login = () => {
                                 Go to Home
                             </Link>
                         </p>
-                        <p className="text-sm text-gray-400 mt-2">
-                            Are you a creator?{' '}
-                            <Link to="/creator/login" className="text-orange-400 hover:text-orange-300 transition-colors">
-                                Creator Dashboard
-                            </Link>
-                        </p>
                     </div>
 
                     {/* Demo Credentials */}
                     <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-                        <h3 className="text-sm font-medium text-gray-200 mb-2">Demo Account:</h3>
+                        <h3 className="text-sm font-medium text-gray-200 mb-2">Demo Creator Account:</h3>
                         <div className="text-xs text-gray-400 space-y-1">
-                            <p><span className="font-medium">Username:</span> demo</p>
-                            <p><span className="font-medium">Password:</span> demo123</p>
-                            <p className="text-orange-400">* Use these credentials to test the platform</p>
+                            <p><span className="font-medium">Username:</span> creator1</p>
+                            <p><span className="font-medium">Password:</span> creatorpass123</p>
+                            <p className="text-orange-400">* This account is linked to YouTuber "Akash Gupta"</p>
                         </div>
                     </div>
                 </div>
@@ -272,4 +234,4 @@ const Login = () => {
     );
 };
 
-export default Login; 
+export default CreatorLogin; 

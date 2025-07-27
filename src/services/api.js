@@ -13,41 +13,26 @@ api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('access_token');
         if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+            config.headers.Authorization = `Token ${token}`;
         }
         return config;
     },
     (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle token refresh
+// Response interceptor to handle authentication errors
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const originalRequest = error.config;
-
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-
-            const refreshToken = localStorage.getItem('refresh_token');
-            if (refreshToken) {
-                try {
-                    const response = await axios.post('http://localhost:8000/api/auth/refresh/', {
-                        refresh: refreshToken,
-                    });
-
-                    const { access } = response.data;
-                    localStorage.setItem('access_token', access);
-
-                    return api(originalRequest);
-                } catch (refreshError) {
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-                    window.location.href = '/login';
-                }
+        if (error.response?.status === 401) {
+            // Token is invalid or expired
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            // Only redirect to login if we're not already on login/register pages
+            if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+                window.location.href = '/login';
             }
         }
-
         return Promise.reject(error);
     }
 );
@@ -65,16 +50,15 @@ export const youtubersAPI = {
     getList: (params) => api.get('/youtubers/', { params }),
     getDetail: (id) => api.get(`/youtubers/${id}/`),
     getFeatured: () => api.get('/youtubers/featured/'),
-    search: (params) => api.get('/youtubers/search/', { params }),
+    submitInquiry: (data) => api.post('/youtubers/inquiry/', data),
 };
 
 // Content API
 export const contentAPI = {
-    getHomeData: () => api.get('/home-data/'),
+    getHomeData: () => api.get('/home/'),
     getTeam: () => api.get('/team/'),
     getSliders: () => api.get('/sliders/'),
-    getContactInfo: () => api.get('/contactinfo/'),
-    submitContact: (data) => api.post('/contact/', data),
+    getContactInfo: () => api.get('/contact-info/'),
     submitContactPage: (data) => api.post('/contactpage/', data),
 };
 
